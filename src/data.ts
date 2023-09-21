@@ -1,19 +1,38 @@
+import {Element, WSEvent} from "./types";
+import { Database } from "bun:sqlite";
+
 const BUFFER_TIME = 5000;
-type Element = {
-    version: number, versionNonce: number, isDeleted: boolean
-    id: string,
-    type: string,
-    __precedingElement__: string;
-    updated: string,
-    locked: boolean
+const db = new Database("mydb.sqlite");
+
+db.run(`create table if not exists SCENES
+(
+    ROOM_ID  TEXT
+        constraint SCENES_pk
+            primary key,
+    ELEMENTS TEXT
+);
+
+`)
+
+async function saveToDb(roomID: string, elements: Record<string, Element>) {
+    db.run(`
+    INSERT INTO SCENES(ROOM_ID, ELEMENTS) VALUES($room, $elements)
+  ON CONFLICT(ROOM_ID) DO UPDATE SET ELEMENTS=$elements;
+    `, {$room: roomID, $elements: JSON.stringify(elements)})
 }
-export type WSEvent = {
-    type: string, payload: {
-        elements: Element[]
+
+
+function loadAll() {
+    const scenes = db.query(`select * from SCENES`).all();
+    console.log('loaded', scenes)
+    for(let row of scenes) {
+        buffer[row.ROOM_ID] =JSON.parse(row.ELEMENTS)
     }
 }
 
 const buffer: Record<string, Record<string, Element>> = {};
+loadAll();
+
 const timers = new Set<string>();
 export const handleData = (roomId: string, evt: WSEvent) => {
 
@@ -36,11 +55,20 @@ export const handleData = (roomId: string, evt: WSEvent) => {
     }
 }
 
-function persist(roomId: string) {
+async function persist(roomId: string) {
     const scene = buffer[roomId];
     if(scene) {
-        console.log('lol this is where we do the db save', {roomId, scene: Object.keys(scene)})
+        await saveToDb(roomId, scene);
+        console.log('lol this is where we do the db save', {roomId, scene})
     }
 
 timers.delete(roomId);
+}
+
+export function getElements(roomID: string) {
+    const scene = buffer[roomID];
+    console.log('lol getting elements', {scene, roomID})
+
+    if(scene) return Object.values(scene);
+    return []
 }

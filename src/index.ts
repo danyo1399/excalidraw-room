@@ -2,7 +2,8 @@ import debug from "debug";
 import express from "express";
 import http from "http";
 import { Server as SocketIO } from "socket.io";
-import {handleData} from "./data";
+import {getElements, handleData} from "./data";
+import {createSceneInitEvent} from "./events";
 
 const serverDebug = debug("server");
 const ioDebug = debug("io");
@@ -50,6 +51,9 @@ try {
       const sockets = await io.in(roomID).fetchSockets();
       if (sockets.length <= 1) {
         io.to(`${socket.id}`).emit("first-in-room");
+        console.log('lol in');
+        // load elements for first user in room.
+        io.to(`${socket.id}`).emit('client-broadcast', JSON.stringify(createSceneInitEvent(getElements(roomID))))
       } else {
         socketDebug(`${socket.id} new-user emitted to room ${roomID}`);
         socket.broadcast.to(roomID).emit("new-user", socket.id);
