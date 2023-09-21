@@ -2,6 +2,7 @@ import debug from "debug";
 import express from "express";
 import http from "http";
 import { Server as SocketIO } from "socket.io";
+import {handleData} from "./data";
 
 const serverDebug = debug("server");
 const ioDebug = debug("io");
@@ -62,7 +63,9 @@ try {
 
     socket.on(
       "server-broadcast",
-      (roomID: string, encryptedData: ArrayBuffer, iv: Uint8Array) => {
+      (roomID: string, encryptedData: string, iv: Uint8Array) => {
+        const data = JSON.parse(encryptedData);
+        handleData(roomID, data);
         socketDebug(`${socket.id} sends update to ${roomID}`);
         socket.broadcast.to(roomID).emit("client-broadcast", encryptedData, iv);
       },
