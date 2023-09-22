@@ -1,3 +1,7 @@
+export type Scene = {
+    lastUpdated: string;
+    elements: Record<string, Element>
+}
 export type Element = {
     version: number, versionNonce: number, isDeleted: boolean
     id: string,
