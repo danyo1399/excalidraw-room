@@ -7,7 +7,7 @@ export type Element = {
     id: string,
     type: string,
     __precedingElement__: string;
-    updated: string,
+    updated: number,
     locked: boolean
 }
 export type WSEvent = {
