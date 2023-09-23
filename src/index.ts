@@ -4,10 +4,10 @@ import http from "http";
 import {Server as SocketIO} from "socket.io";
 import {getElements, getFilePath, handleData, roomExists, saveFile} from "./data";
 import {createSceneInitEvent} from "./events";
-
-
 import multer from "multer";
-import {FILE_CACHE_MAX_AGE_SEC, FILE_UPLOAD_MAX_BYTES, FILES_PATH, FILES_TEMP_PATH} from "./constants";
+import {EXCALIDRAW_PATH, FILE_CACHE_MAX_AGE_SEC, FILE_UPLOAD_MAX_BYTES, FILES_PATH, FILES_TEMP_PATH} from "./constants";
+
+import cors from "cors";
 
 const upload = multer({dest: FILES_TEMP_PATH, limits: {fileSize: FILE_UPLOAD_MAX_BYTES, files: 1}})
 
@@ -28,7 +28,9 @@ const port =
 
 console.log('using port', port)
 
+app.use(cors({}))
 app.use(express.static("public"));
+
 
 app.post('/rooms/:roomId/files/:fileId', upload.single('file'), async function (req, res, next) {
     const exists = await roomExists(req.params.roomId);
@@ -59,10 +61,10 @@ app.get('/rooms/:roomId/files/:fileId', upload.single('file'), async function (r
     res.sendFile(getFilePath(roomId, fileId), {headers: {'content-type': 'application/octet-stream', 'cache-control': `public, max-age=${FILE_CACHE_MAX_AGE_SEC}`}})
 
 })
-
-app.get("/", (req, res) => {
-    res.send("Excalidraw collaboration server is up :)");
-});
+app.use(express.static(EXCALIDRAW_PATH))
+// app.get("/", (req, res) => {
+//
+// });
 
 const server = http.createServer(app);
 

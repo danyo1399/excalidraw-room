@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import {
     BUFFER_TIME,
     DATA_PATH,
-    DELETED_ELEMENT_TIMEOUT,
+    DELETED_ELEMENT_TIMEOUT, EXCALIDRAW_PATH,
     FILES_PATH,
     SQLITE_PATH
 } from "./constants";
@@ -16,6 +16,7 @@ import {
 
 fs.mkdirSync(DATA_PATH, {recursive: true})
 fs.mkdirSync(FILES_PATH, {recursive: true})
+fs.mkdirSync(EXCALIDRAW_PATH, {recursive: true})
 
 
 const db = sqlite(SQLITE_PATH);

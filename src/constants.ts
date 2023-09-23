@@ -2,6 +2,7 @@ export const DATA_PATH = './data';
 export const FILES_TEMP_PATH = `${DATA_PATH}/files/temp`;
 export const FILES_PATH = `${DATA_PATH}/files`;
 export const SQLITE_PATH = `${DATA_PATH}/mydb.sqlite`;
+export const EXCALIDRAW_PATH = `excalidraw`;
 
 export const BUFFER_TIME = 5000;
 
