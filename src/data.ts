@@ -97,7 +97,7 @@ async function persist(roomId: string) {
         }
 
         await saveToDb(roomId, scene);
-        console.log('lol this is where we do the db save', {roomId, elements: Object.values(scene.elements).map(getElementSubset)})
+        // console.log('lol this is where we do the db save', {roomId, elements: Object.values(scene.elements).map(getElementSubset)})
     }
 
 timers.delete(roomId);

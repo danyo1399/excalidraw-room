@@ -18,7 +18,8 @@ const migrations: Migration[] = [
 ]
 
 export function migrate(db: sqlite.Database) {
-    db.prepare(`create table if not exists TEST_MIGRATIONS
+    console.log('Performing migration')
+    db.prepare(`create table if not exists DB_MIGRATIONS
 (
     ID           integer
         constraint TEST_MIGRATIONS_pk
@@ -28,17 +29,16 @@ export function migrate(db: sqlite.Database) {
 );
     `
     ).run();
-
-    const nextIndex = (db.prepare(`select ifnull(max(VERSION), 0) next_index from TEST_MIGRATIONS`).get() as any).next_result;
-
+const nextRow = (db.prepare(`select ifnull(max(VERSION), 0) next_index from DB_MIGRATIONS`).get() as any);
+console.log('db migration next index', nextRow);
     //const index = (db.query(`select max(VERSION) from TEST_MIGRATIONS`).get() || 0)  + 1
-    for (let i = nextIndex; i < migrations.length; i++) {
+    for (let i = nextRow.next_index; i < migrations.length; i++) {
         console.log('running migration ', i)
         const fn = migrations[i];
         db.transaction(() => {
             fn(db);
-            db.prepare('insert into TEST_MIGRATIONS(CREATED_DATE, VERSION) values(?, ?)').run(Date.now(), i + 1)
-        })
+            db.prepare('insert into DB_MIGRATIONS(CREATED_DATE, VERSION) values(?, ?)').run(Date.now(), i + 1)
+        })();
 
 
         // db.transaction(() => {

@@ -1,3 +1,24 @@
+# Self hosted excalidraw server
+Its still in a proof of concept
+
+This is a self-contained self hosted fork of excalidraw that you can 
+self-host in your own environment
+
+##Rrun via docker example
+
+Build docker container with the 
+```
+docker buildx build -t excalidraw-selfhosted:latest .
+```
+Host docker container
+```
+docker run -p 3333:80 -itd --name excalidraw-selfhosted excalidraw-selfhosted:latest 
+```
+goto `http://localhost:3333`
+
+### Below are the excalidraw docs
+
+---
 # Example of excalidraw collaboration server
 
 Collaboration server for Excalidraw
