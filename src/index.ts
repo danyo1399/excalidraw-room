@@ -8,6 +8,7 @@ import multer from "multer";
 import {EXCALIDRAW_PATH, FILE_CACHE_MAX_AGE_SEC, FILE_UPLOAD_MAX_BYTES, FILES_PATH, FILES_TEMP_PATH} from "./constants";
 
 import cors from "cors";
+import {WSEvent} from "./types";
 
 const upload = multer({dest: FILES_TEMP_PATH, limits: {fileSize: FILE_UPLOAD_MAX_BYTES, files: 1}})
 
@@ -94,7 +95,7 @@ try {
             if (sockets.length <= 1) {
                 io.to(`${socket.id}`).emit("first-in-room");
                 // load elements for first user in room.
-                io.to(`${socket.id}`).emit('client-broadcast', JSON.stringify(createSceneInitEvent(getElements(roomID))))
+                io.to(`${socket.id}`).emit('client-broadcast', JSON.stringify(createSceneInitEvent(getElements(roomID))));
             } else {
                 socketDebug(`${socket.id} new-user emitted to room ${roomID}`);
                 socket.broadcast.to(roomID).emit("new-user", socket.id);
@@ -109,7 +110,7 @@ try {
         socket.on(
             "server-broadcast",
             (roomID: string, encryptedData: string, iv: Uint8Array) => {
-                const data = JSON.parse(encryptedData);
+                const data = JSON.parse(encryptedData) as WSEvent;
                 handleData(roomID, data);
                 socketDebug(`${socket.id} sends update to ${roomID}`);
                 socket.broadcast.to(roomID).emit("client-broadcast", encryptedData, iv);
