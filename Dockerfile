@@ -1,15 +1,14 @@
 FROM node:18-alpine
 
 WORKDIR /excalidraw-room
-ENV ENV_BASE_PATH=/excalidraw-room/dist
+ENV ENV_BASE_PATH=/
 COPY package.json yarn.lock ./
 RUN yarn
 
 COPY tsconfig.json ./
 COPY src ./src
-COPY excalidraw ./excalidraw
 RUN yarn build
-COPY excalidraw ./dist/excalidraw
+COPY excalidraw /excalidraw
 EXPOSE 80
 # CMD ["/bin/sh"]
 

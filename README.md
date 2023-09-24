@@ -8,14 +8,20 @@ self-host in your own environment
 
 Build docker container with the 
 ```
-docker buildx build -t excalidraw-selfhosted:latest .
+docker buildx build -t danyo1399/excalidraw-selfhosted:latest .
 ```
 Host docker container
 ```
-docker run -p 3333:80 -itd --name excalidraw-selfhosted excalidraw-selfhosted:latest 
+docker run -p 3333:80 -it --rm --name excalidraw-selfhosted danyo1399/excalidraw-selfhosted:latest 
 ```
 goto `http://localhost:3333`
 
+## Build and publish new version
+- open exalidraw repo and run yarn build
+- delete contents of excalidraw folder
+- copy latest version to from build to excalidraw folder in this repo
+- run cmd above to build container
+- publish container to `docker push danyo1399/excalidraw-selfhosted:latest`
 ### Below are the excalidraw docs
 
 ---

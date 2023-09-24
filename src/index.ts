@@ -9,6 +9,7 @@ import {EXCALIDRAW_PATH, FILE_CACHE_MAX_AGE_SEC, FILE_UPLOAD_MAX_BYTES, FILES_PA
 
 import cors from "cors";
 import {WSEvent} from "./types";
+import bodyParser from "body-parser";
 
 const upload = multer({dest: FILES_TEMP_PATH, limits: {fileSize: FILE_UPLOAD_MAX_BYTES, files: 1}})
 
@@ -31,7 +32,7 @@ console.log('using port', port)
 
 app.use(cors({}))
 app.use(express.static("public"));
-
+app.use(bodyParser.json())
 
 app.post('/rooms/:roomId/files/:fileId', upload.single('file'), async function (req, res, next) {
     const exists = await roomExists(req.params.roomId);
@@ -42,15 +43,25 @@ app.post('/rooms/:roomId/files/:fileId', upload.single('file'), async function (
     }
 
     await saveFile(req.file!.path, req.params.roomId, req.params.fileId);
-    res.send('awesome')
     res.status(200);
     res.end();
 })
+app.get('/rooms/:roomId/elements', (req, res, next) => {
+    const elements = getElements(req.params.roomId)
+    res.json(elements);
+    res.end();
+})
 
-app.get('/rooms/:roomId/files/:fileId', upload.single('file'), async function (req, res, next) {
-    console.log('boo')
+app.put('/rooms/:roomId/elements', (req, res, next) => {
+    const elements = req.body;
+    const {roomId} = req.params;
+    // console.log('elements', elements);
+    handleData(roomId, elements)
+    res.end();
+})
+    app.get('/rooms/:roomId/files/:fileId', upload.single('file'), async function (req, res, next) {
     const {roomId, fileId} = req.params;
-    const exists = await roomExists(roomId);
+    const exists = roomExists(roomId);
     if (!exists) {
         res.status(404);
         res.end();
@@ -92,10 +103,11 @@ try {
             socketDebug(`${socket.id} has joined ${roomID}`);
             await socket.join(roomID);
             const sockets = await io.in(roomID).fetchSockets();
+            console.log(`socket ${socket.id} joining room ${roomID}`)
             if (sockets.length <= 1) {
                 io.to(`${socket.id}`).emit("first-in-room");
                 // load elements for first user in room.
-                io.to(`${socket.id}`).emit('client-broadcast', JSON.stringify(createSceneInitEvent(getElements(roomID))));
+                // io.to(`${socket.id}`).emit('client-broadcast', JSON.stringify(createSceneInitEvent(getElements(roomID))));
             } else {
                 socketDebug(`${socket.id} new-user emitted to room ${roomID}`);
                 socket.broadcast.to(roomID).emit("new-user", socket.id);
@@ -111,7 +123,7 @@ try {
             "server-broadcast",
             (roomID: string, encryptedData: string, iv: Uint8Array) => {
                 const data = JSON.parse(encryptedData) as WSEvent;
-                handleData(roomID, data);
+                handleData(roomID, data.payload.elements);
                 socketDebug(`${socket.id} sends update to ${roomID}`);
                 socket.broadcast.to(roomID).emit("client-broadcast", encryptedData, iv);
             },
