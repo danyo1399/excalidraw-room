@@ -31,10 +31,10 @@ const port =
 console.log('using port', port)
 
 app.use(cors({}))
-app.use(bodyParser.json())
+app.use(bodyParser.json({limit:'5mb'}))
 
 app.post('/rooms/:roomId/files/:fileId', upload.single('file'), async function (req, res, next) {
-    const exists = await roomExists(req.params.roomId);
+    const exists = roomExists(req.params.roomId);
     if (!exists) {
         res.status(404);
         res.end();
