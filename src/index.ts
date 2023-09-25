@@ -31,7 +31,6 @@ const port =
 console.log('using port', port)
 
 app.use(cors({}))
-app.use(express.static("public"));
 app.use(bodyParser.json())
 
 app.post('/rooms/:roomId/files/:fileId', upload.single('file'), async function (req, res, next) {
@@ -55,7 +54,6 @@ app.get('/rooms/:roomId/elements', (req, res, next) => {
 app.put('/rooms/:roomId/elements', (req, res, next) => {
     const elements = req.body;
     const {roomId} = req.params;
-    // console.log('elements', elements);
     handleData(roomId, elements)
     res.end();
 })
@@ -123,7 +121,7 @@ try {
             "server-broadcast",
             (roomID: string, encryptedData: string, iv: Uint8Array) => {
                 const data = JSON.parse(encryptedData) as WSEvent;
-                handleData(roomID, data.payload.elements);
+                //handleData(roomID, data.payload.elements);
                 socketDebug(`${socket.id} sends update to ${roomID}`);
                 socket.broadcast.to(roomID).emit("client-broadcast", encryptedData, iv);
             },

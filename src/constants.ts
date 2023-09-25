@@ -7,8 +7,9 @@ export const FILES_TEMP_PATH = path.resolve(DATA_PATH, 'files', 'temp');
 export const FILES_PATH = path.resolve(DATA_PATH, 'files');
 export const SQLITE_PATH = path.resolve(DATA_PATH, 'mydb.sqlite');
 export const EXCALIDRAW_PATH = path.resolve(BASE_PATH, `excalidraw`);
+export const SCENE_BACKUP_PATH = path.resolve(DATA_PATH, `backup`);
 
-console.log('Paths', {BASE_PATH, DATA_PATH, FILES_TEMP_PATH, FILES_PATH, SQLITE_PATH, EXCALIDRAW_PATH})
+console.log('Paths', {BASE_PATH, DATA_PATH, FILES_TEMP_PATH, FILES_PATH, SQLITE_PATH, EXCALIDRAW_PATH, BACKUP_PATH: SCENE_BACKUP_PATH})
 
 export const BUFFER_TIME = 5000;
 

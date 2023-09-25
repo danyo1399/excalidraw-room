@@ -5,6 +5,7 @@ import * as fsp from 'fs/promises';
 import * as path from 'path';
 import * as fs from 'fs';
 import {
+    SCENE_BACKUP_PATH,
     BUFFER_TIME,
     DATA_PATH,
     DELETED_ELEMENT_TIMEOUT, EXCALIDRAW_PATH,
@@ -12,9 +13,10 @@ import {
     SQLITE_PATH
 } from "./constants";
 
-
+fs.mkdirSync(SCENE_BACKUP_PATH, {recursive: true})
 fs.mkdirSync(DATA_PATH, {recursive: true})
 fs.mkdirSync(FILES_PATH, {recursive: true})
+fs.mkdirSync(EXCALIDRAW_PATH, {recursive: true})
 fs.mkdirSync(EXCALIDRAW_PATH, {recursive: true})
 
 
@@ -23,21 +25,37 @@ db.pragma('journal_mode = WAL');
 
 migrate(db);
 
-
+function getSplitPath(path: string) {
+    const prefix = path.substring(0,2);
+    const suffix = path.substring(2);
+    return {prefix, suffix, path: `${prefix}/${suffix}`}
+}
 export async function saveFile(path: string, roomId: string, fileId: string) {
-    await fsp.rename(path, `${FILES_PATH}/${roomId}_${fileId}`)
+    const parts = getSplitPath(roomId);
+    const basePath = `${FILES_PATH}/${parts.prefix}`
+    await fsp.mkdir(basePath, {recursive: true})
+    await fsp.rename(path, `${basePath}/${roomId}_${fileId}`)
 }
 
 export function getFilePath(roomId: string, fileId: string) {
-    return path.resolve(`${FILES_PATH}/${roomId}_${fileId}`);
+    const parts = getSplitPath(roomId);
+    const basePath = `${FILES_PATH}/${parts.prefix}`
+    return path.resolve(`${basePath}/${roomId}_${fileId}`);
 }
 
 async function saveToDb(roomID: string, scene: Scene) {
+    const sceneJson = JSON.stringify(scene);
     db.prepare(`
-        INSERT INTO SCENES(ROOM_ID, ELEMENTS, UPDATED_DATE)
-        VALUES ($room, $elements, $timestamp) ON CONFLICT(ROOM_ID) DO
-        UPDATE SET ELEMENTS=$elements;
-    `).run({room: roomID, elements: JSON.stringify(scene), timestamp: Date.now()})
+        INSERT INTO SCENES(ROOM_ID, SCENE, UPDATED_DATE)
+        VALUES ($room, $scene, $timestamp) ON CONFLICT(ROOM_ID) DO
+        UPDATE SET SCENE=$scene;
+    `).run({room: roomID, scene: sceneJson, timestamp: Date.now()})
+
+    const parts = getSplitPath(roomID);
+    const basePath = `${SCENE_BACKUP_PATH}/${parts.prefix}`
+    await fsp.mkdir(basePath, {recursive: true})
+    await fsp.writeFile(`${basePath}/${roomID}.json`, sceneJson)
+
 }
 
 
@@ -49,10 +67,10 @@ export function roomExists(roomID: string) {
 
 
 function loadAll() {
-    const scenes: { ROOM_ID: string, ELEMENTS: string }[] = db.prepare(`select *
+    const scenes: { ROOM_ID: string, SCENE: string }[] = db.prepare(`select *
                                                                         from SCENES`).all() as any;
     for (let row of scenes) {
-        buffer[row.ROOM_ID] = JSON.parse(row.ELEMENTS)
+        buffer[row.ROOM_ID] = JSON.parse(row.SCENE)
     }
 }
 
@@ -85,6 +103,12 @@ export const handleData = (roomId: string, elements: Element[]) => {
             scene.elements[remote.id] = remote;
             updated = true;
         }
+        const isSameVersion = !!local && local.version == remote.version && local.versionNonce == remote.versionNonce;
+        if(isSameVersion && local.__precedingElement__ != remote.__precedingElement__ && !!remote.__precedingElement__) {
+            scene.elements[remote.id].__precedingElement__ = remote.__precedingElement__;
+            updated = true;
+        }
+
     }
     if (updated && !timers.has(roomId)) {
         timers.add(roomId);

@@ -10,7 +10,7 @@ const migrations: Migration[] = [
     ROOM_ID  TEXT
         constraint SCENES_pk
             primary key,
-    ELEMENTS TEXT, 
+    SCENE TEXT, 
     UPDATED_DATE DATETIME
 );
 `).run();
@@ -22,7 +22,7 @@ export function migrate(db: sqlite.Database) {
     db.prepare(`create table if not exists DB_MIGRATIONS
 (
     ID           integer
-        constraint TEST_MIGRATIONS_pk
+        constraint DB_MIGRATIONS_pk
             primary key autoincrement,
     CREATED_DATE  DATETIME not null,
     VERSION      integer  not null
