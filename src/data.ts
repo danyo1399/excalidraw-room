@@ -88,6 +88,7 @@ export const handleData = (roomId: string, elements: Element[]) => {
     }
     const scene = buffer[roomId];
     let updated = false;
+    let preceedingElementId = '^';
     for (const remote of elements) {
         const local = scene.elements[remote.id];
 
@@ -103,12 +104,10 @@ export const handleData = (roomId: string, elements: Element[]) => {
             scene.elements[remote.id] = remote;
             updated = true;
         }
-        const isSameVersion = !!local && local.version == remote.version && local.versionNonce == remote.versionNonce;
-        if(isSameVersion && local.__precedingElement__ != remote.__precedingElement__ && !!remote.__precedingElement__) {
-            scene.elements[remote.id].__precedingElement__ = remote.__precedingElement__;
-            updated = true;
-        }
 
+        scene.elements[remote.id].__precedingElement__ = preceedingElementId;
+
+        preceedingElementId = remote.id;
     }
     if (updated && !timers.has(roomId)) {
         timers.add(roomId);
