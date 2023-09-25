@@ -8,12 +8,16 @@ self-host in your own environment
 
 Build docker container with the 
 ```
-docker buildx build -t danyo1399/excalidraw-selfhosted:latest .
+docker buildx build --platform linux/amd64 -t danyo1399/excalidraw-selfhosted:latest .
+
 ```
 Host docker container
 ```
-docker run -p 3333:80 -it --rm --name excalidraw-selfhosted danyo1399/excalidraw-selfhosted:latest 
+docker run -p 3333:80 -it --rm --name excalidraw-selfhosted danyo1399/excalidraw-selfhosted:latest
+
+
 ```
+
 goto `http://localhost:3333`
 
 ## Build and publish new version
@@ -22,6 +26,12 @@ goto `http://localhost:3333`
 - copy latest version to from build to excalidraw folder in this repo
 - run cmd above to build container
 - publish container to `docker push danyo1399/excalidraw-selfhosted:latest`
+
+hosted in vm
+```
+sudo docker pull danyo1399/excalidraw-selfhosted:latest
+sudo docker run -p 80:80 -p:443:443 -itd --restart unless-stopped -v $PWD:/data --name excalidraw-selfhosted danyo1399/excalidraw-selfhosted:latest
+```
 ### Below are the excalidraw docs
 
 ---
