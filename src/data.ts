@@ -12,6 +12,7 @@ import {
     FILES_PATH,
     SQLITE_PATH
 } from "./constants";
+import {hasSceneChanged, reconcileElements} from "./reconciliation";
 
 fs.mkdirSync(SCENE_BACKUP_PATH, {recursive: true})
 fs.mkdirSync(DATA_PATH, {recursive: true})
@@ -26,10 +27,11 @@ db.pragma('journal_mode = WAL');
 migrate(db);
 
 function getSplitPath(path: string) {
-    const prefix = path.substring(0,2);
+    const prefix = path.substring(0, 2);
     const suffix = path.substring(2);
     return {prefix, suffix, path: `${prefix}/${suffix}`}
 }
+
 export async function saveFile(path: string, roomId: string, fileId: string) {
     const parts = getSplitPath(roomId);
     const basePath = `${FILES_PATH}/${parts.prefix}`
@@ -48,7 +50,7 @@ async function saveToDb(roomID: string, scene: Scene) {
     db.prepare(`
         INSERT INTO SCENES(ROOM_ID, SCENE, UPDATED_DATE)
         VALUES ($room, $scene, $timestamp) ON CONFLICT(ROOM_ID) DO
-        UPDATE SET SCENE=$scene;
+        UPDATE SET SCENE=$scene, UPDATED_DATE=$timestamp;
     `).run({room: roomID, scene: sceneJson, timestamp: Date.now()})
 
     const parts = getSplitPath(roomID);
@@ -68,47 +70,33 @@ export function roomExists(roomID: string) {
 
 function loadAll() {
     const scenes: { ROOM_ID: string, SCENE: string }[] = db.prepare(`select *
-                                                                        from SCENES`).all() as any;
+                                                                     from SCENES`).all() as any;
     for (let row of scenes) {
-        buffer[row.ROOM_ID] = JSON.parse(row.SCENE)
+        sceneBuffer[row.ROOM_ID] = JSON.parse(row.SCENE)
     }
 }
 
-const buffer: Record<string, Scene> = {};
+const sceneBuffer: Record<string, Scene> = {};
 loadAll();
 
 const timers = new Set<string>();
 export const handleData = (roomId: string, elements: Element[]) => {
 
-    if (!buffer[roomId]) {
+    if (!sceneBuffer[roomId]) {
         console.log('creating room ', roomId);
-        buffer[roomId] = {lastUpdated: new Date().toJSON(), elements: {}};
+        sceneBuffer[roomId] = {lastUpdated: new Date().toJSON(), elements: []};
     } else {
-        buffer[roomId].lastUpdated = new Date().toJSON();
+        sceneBuffer[roomId].lastUpdated = new Date().toJSON();
     }
-    const scene = buffer[roomId];
-    let updated = false;
-    let preceedingElementId = '^';
-    for (const remote of elements) {
-        const local = scene.elements[remote.id];
+    const scene = sceneBuffer[roomId];
 
-        const shouldDiscard = local != null &&
-            (
-                local.version > remote.version ||
-                // resolve conflicting edits deterministically by taking the one with
-                // the lowest versionNonce
-                (local.version === remote.version && local.versionNonce < remote.versionNonce)
-            );
+    const reconsiledElements = reconcileElements(scene.elements, elements);
 
-        if (!shouldDiscard) {
-            scene.elements[remote.id] = remote;
-            updated = true;
-        }
-
-        scene.elements[remote.id].__precedingElement__ = preceedingElementId;
-
-        preceedingElementId = remote.id;
+    const updated = hasSceneChanged(scene.elements, reconsiledElements);
+    if(updated) {
+        scene.elements = reconsiledElements;
     }
+
     if (updated && !timers.has(roomId)) {
         timers.add(roomId);
         setTimeout(() => persist(roomId), BUFFER_TIME)
@@ -116,32 +104,27 @@ export const handleData = (roomId: string, elements: Element[]) => {
 }
 
 async function persist(roomId: string) {
-    const scene = buffer[roomId];
+    const scene = sceneBuffer[roomId];
 
     if (scene) {
         // remove deleted elements
         const deleteBeforeDate = Date.now() - DELETED_ELEMENT_TIMEOUT;
-        const elements = Object.values(scene.elements);
-        for (const ele of elements) {
-            if (ele.isDeleted && ele.updated < deleteBeforeDate) {
-                console.log('lol deleting ele', ele.id)
-                delete scene.elements[ele.id];
-            }
-        }
+        scene.elements = scene.elements.filter(ele => !ele.isDeleted || ele.updated > deleteBeforeDate)
 
         await saveToDb(roomId, scene);
-        // console.log('lol this is where we do the db save', {roomId, elements: Object.values(scene.elements).map(getElementSubset)})
     }
 
     timers.delete(roomId);
 }
 
 export function getElements(roomID: string) {
-    const scene = buffer[roomID];
+    const scene = sceneBuffer[roomID];
     if (scene == null) return null;
-    return Object.values(scene.elements);
+    return scene.elements || [];
 }
 
 function getElementSubset(ele: Element) {
     return {id: ele.id, version: ele.version, updated: ele.updated, isDeleted: ele.isDeleted,}
 }
+
+const HEAD_INDEX = '^'

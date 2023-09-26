@@ -121,7 +121,7 @@ try {
             "server-broadcast",
             (roomID: string, encryptedData: string, iv: Uint8Array) => {
                 const data = JSON.parse(encryptedData) as WSEvent;
-                //handleData(roomID, data.payload.elements);
+                handleData(roomID, data.payload.elements);
                 socketDebug(`${socket.id} sends update to ${roomID}`);
                 socket.broadcast.to(roomID).emit("client-broadcast", encryptedData, iv);
             },

@@ -1,12 +1,14 @@
 export type Scene = {
     lastUpdated: string;
-    elements: Record<string, Element>
+    elements: readonly Element[]
 }
+export const PRECEDING_ELEMENT_KEY = "__precedingElement__";
+
 export type Element = {
     version: number, versionNonce: number, isDeleted: boolean
     id: string,
     type: string,
-    __precedingElement__: string;
+    [PRECEDING_ELEMENT_KEY]?: string;
     updated: number,
     locked: boolean
 }
@@ -15,3 +17,4 @@ export type WSEvent = {
         elements: Element[]
     }
 }
+
