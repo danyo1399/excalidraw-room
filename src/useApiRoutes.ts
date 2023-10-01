@@ -1,4 +1,4 @@
-import {getElements, getFilePath, handleData, roomExists, saveFile} from "./data";
+import {getElements, getFilePath, handleRoomUpdates, roomExists, saveFile} from "./data";
 import {FILE_CACHE_MAX_AGE_SEC, FILE_UPLOAD_MAX_BYTES, FILES_TEMP_PATH} from "./constants";
 import express from "express";
 import multer from "multer";
@@ -37,7 +37,7 @@ apiRoutes.get('/rooms/:roomId/elements', (req, res, next) => {
 apiRoutes.put('/rooms/:roomId/elements', (req, res, next) => {
     const elements = req.body;
     const {roomId} = req.params;
-    handleData(roomId, elements)
+    handleRoomUpdates(roomId, elements)
     res.end();
 })
 apiRoutes.get('/rooms/:roomId/files/:fileId', upload.single('file'), async function (req, res, next) {

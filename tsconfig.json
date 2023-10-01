@@ -16,9 +16,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "outDir": "dist",
-    "types": ["src/global.d.ts"]
   },
-  "include": ["src/global.d.ts"],
   "exclude": [
     "excalidraw"
   ]

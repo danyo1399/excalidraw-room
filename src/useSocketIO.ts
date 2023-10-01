@@ -1,7 +1,7 @@
 import {Server as SocketIO} from "socket.io";
 import {isAuthenticated, sessionMiddleware} from "./passport";
 import {IncomingMessageEx, WSEvent} from "./types";
-import {handleData} from "./data";
+import {handleRoomUpdates} from "./data";
 import debug from "debug";
 import http from "http";
 import {PassportStatic} from "passport";
@@ -73,7 +73,7 @@ export function useSocketIo(server: http.Server, passport: PassportStatic) {
                 "server-broadcast",
                 (roomID: string, encryptedData: string, iv: Uint8Array) => {
                     const data = JSON.parse(encryptedData) as WSEvent;
-                    handleData(roomID, data.payload.elements);
+                    handleRoomUpdates(roomID, data.payload.elements);
                     socketDebug(`${socket.id} sends update to ${roomID}`);
                     socket.broadcast.to(roomID).emit("client-broadcast", encryptedData, iv);
                 },

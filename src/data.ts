@@ -76,18 +76,38 @@ function loadAll() {
     }
 }
 
+function getRoom(roomId: string) {
+    const record = db.prepare(`select * from SCENES where ROOM_ID = ?`).get(roomId) as any;
+    if(record != null) {
+        const scene: Scene = JSON.parse(record.SCENE);
+        return scene;
+    }
+    return null;
+}
+
 const sceneBuffer: Record<string, Scene> = {};
-loadAll();
 
-const timers = new Set<string>();
-export const handleData = (roomId: string, elements: Element[]) => {
+const roomPersistQueue = new Set<string>();
 
+function initialiseRoomBuffer(roomId: string) {
     if (!sceneBuffer[roomId]) {
-        console.log('creating room ', roomId);
-        sceneBuffer[roomId] = {lastUpdated: new Date().toJSON(), elements: []};
+        console.log('loading room from db', roomId);
+        const scene = getRoom(roomId);
+        if(scene != null) {
+            sceneBuffer[roomId] = scene;
+        }
+    }
+}
+
+export const handleRoomUpdates = (roomId: string, elements: Element[]) => {
+    initialiseRoomBuffer(roomId);
+    if (!sceneBuffer[roomId]) {
+            console.log('creating room ', roomId);
+            sceneBuffer[roomId] = {lastUpdated: new Date().toJSON(), elements: []};
     } else {
         sceneBuffer[roomId].lastUpdated = new Date().toJSON();
     }
+
     const scene = sceneBuffer[roomId];
 
     const reconsiledElements = reconcileElements(scene.elements, elements);
@@ -97,34 +117,30 @@ export const handleData = (roomId: string, elements: Element[]) => {
         scene.elements = reconsiledElements;
     }
 
-    if (updated && !timers.has(roomId)) {
-        timers.add(roomId);
+    if (updated && !roomPersistQueue.has(roomId)) {
+        roomPersistQueue.add(roomId);
         setTimeout(() => persist(roomId), PERSIST_BUFFER_TIME_MS)
     }
 }
 
-async function persist(roomId: string) {
-    const scene = sceneBuffer[roomId];
+async function persist(roomID: string) {
+    initialiseRoomBuffer(roomID);
+    const scene = sceneBuffer[roomID];
 
     if (scene) {
         // remove deleted elements
         const deleteBeforeDate = Date.now() - DELETED_ELEMENT_TIMEOUT;
         scene.elements = scene.elements.filter(ele => !ele.isDeleted || ele.updated > deleteBeforeDate)
 
-        await saveToDb(roomId, scene);
+        await saveToDb(roomID, scene);
     }
 
-    timers.delete(roomId);
+    roomPersistQueue.delete(roomID);
 }
 
 export function getElements(roomID: string) {
+    initialiseRoomBuffer(roomID);
     const scene = sceneBuffer[roomID];
     if (scene == null) return null;
     return scene.elements || [];
 }
-
-function getElementSubset(ele: Element) {
-    return {id: ele.id, version: ele.version, updated: ele.updated, isDeleted: ele.isDeleted,}
-}
-
-const HEAD_INDEX = '^'
