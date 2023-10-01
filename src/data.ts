@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import {
     SCENE_BACKUP_PATH,
-    BUFFER_TIME,
+    PERSIST_BUFFER_TIME_MS,
     DATA_PATH,
     DELETED_ELEMENT_TIMEOUT, EXCALIDRAW_PATH,
     FILES_PATH,
@@ -99,7 +99,7 @@ export const handleData = (roomId: string, elements: Element[]) => {
 
     if (updated && !timers.has(roomId)) {
         timers.add(roomId);
-        setTimeout(() => persist(roomId), BUFFER_TIME)
+        setTimeout(() => persist(roomId), PERSIST_BUFFER_TIME_MS)
     }
 }
 

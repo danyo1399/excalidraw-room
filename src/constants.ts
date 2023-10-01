@@ -11,7 +11,14 @@ export const SCENE_BACKUP_PATH = path.resolve(DATA_PATH, `backup`);
 
 console.log('Paths', {BASE_PATH, DATA_PATH, FILES_TEMP_PATH, FILES_PATH, SQLITE_PATH, EXCALIDRAW_PATH, BACKUP_PATH: SCENE_BACKUP_PATH})
 
-export const BUFFER_TIME = 5000;
+export const PERSIST_BUFFER_TIME_MS = 10000;
+
+// Server and Client constants that must be synced
+// -------------------------------------------------------------------------------------------------------------------------
+export const EXPIRES_IN_MS = 1000 * 60 * 60 * 12; // 12 hrs
+export const REAUTHENTICATE_THRESHOLD_IN_MS = 1000 * 60 * 60 * 2; // 4 hours
+export const SHOW_EXPIRY_WARNING_THRESHOLD_MS = 1000 * 60 * 10; // 5 minutes
+
 
 // Server and Client constants that must be synced
 // -------------------------------------------------------------------------------------------------------------------------
