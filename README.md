@@ -30,7 +30,7 @@ goto `http://localhost:3333`
 hosted in vm
 ```
 sudo docker pull danyo1399/excalidraw-selfhosted:latest
-sudo docker run -p 80:80 -p:443:443 -itd --restart unless-stopped -v $PWD:/data --name excalidraw-selfhosted danyo1399/excalidraw-selfhosted:latest
+sudo docker run -p 80:80 -p:443:443 -p:3002:80 --env-file excalidraw.env -itd --restart unless-stopped -v $PWD:/data --name excalidraw-selfhosted danyo1399/excalidraw-selfhosted:latest
 ```
 ### Below are the excalidraw docs
 

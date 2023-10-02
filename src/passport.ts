@@ -23,7 +23,8 @@ passport.use(new OpenIDConnectStrategy({
             userInfoURL: config.auth.userInfoURL,
             clientID: config.auth.clientID,
             clientSecret: config.auth.clientSecret,
-            callbackURL: '/auth/callback',
+            callbackURL: config.auth.callbackUrl,
+
             scope: config.auth.scopes
         },
         function verify(issuer: any, profile: any, cb: any) {

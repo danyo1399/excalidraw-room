@@ -15,6 +15,7 @@ export const config = {
         userInfoURL: getConfigValue('AUTH__USER_INFO_URL'),
         clientID: getConfigValue('AUTH__CLIENT_ID'),
         clientSecret: getConfigValue('AUTH__CLIENT_SECRET'),
+        callbackUrl: getConfigValue('AUTH__CALLBACK_URL'),
         scopes: (getConfigValue('AUTH__SCOPES') || '').split(' ')
     },
     secretKey: getConfigValue('SECRET_KEY')
