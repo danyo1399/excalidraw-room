@@ -4,7 +4,7 @@ Its still in a proof of concept
 This is a self-contained self hosted fork of excalidraw that you can 
 self-host in your own environment
 
-##Rrun via docker example
+## Run via docker example
 
 Build docker container with the 
 ```
@@ -13,7 +13,7 @@ docker buildx build --platform linux/amd64 -t danyo1399/excalidraw-selfhosted:la
 ```
 Host docker container
 ```
-docker run -p 3333:80 -it --rm --name excalidraw-selfhosted danyo1399/excalidraw-selfhosted:latest
+docker run --env-file .env -p 3002:80 -it --rm --name excalidraw-selfhosted danyo1399/excalidraw-selfhosted:latest
 
 
 ```

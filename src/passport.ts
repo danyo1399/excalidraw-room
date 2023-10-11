@@ -24,7 +24,6 @@ passport.use(new OpenIDConnectStrategy({
             clientID: config.auth.clientID,
             clientSecret: config.auth.clientSecret,
             callbackURL: config.auth.callbackUrl,
-
             scope: config.auth.scopes
         },
         function verify(issuer: any, profile: any, cb: any) {
@@ -90,18 +89,22 @@ export function usePassport(app: Express) {
 
 
     app.get('/auth/login', passport.authenticate('openidconnect'));
+
+    app.use('/auth/callback', (req, res, next) => {
+        // for some reason the auth callback verify wipes the session
+        (req as any).returnTo = (req as any).session.returnTo
+
+        next()
+    })
     app.get('/auth/callback',
         passport.authenticate('openidconnect', {
             failureRedirect: '/auth/failed', failureMessage: true,
         }), (req, res) => {
-            res.redirect('/#redirected')
+
+            res.redirect((req as any).returnTo || '/')
         }
     )
-    ;
-    // app.use((req, res, next) => {
-    //     console.log('lol session', {session: req.session, user: req.user});
-    //     next()
-    // })
+
     app.get('/auth/failed', (req, res) => {
         const anyReq: any = req;
         res.send(anyReq?.session?.messages.join() || 'Something went wrong')

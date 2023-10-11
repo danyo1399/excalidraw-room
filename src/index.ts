@@ -17,9 +17,6 @@ import proxy from 'express-http-proxy';
 const serverDebug = debug("server");
 
 
-
-
-
 const port =
     process.env.PORT || (process.env.NODE_ENV !== "development" ? 80 : 3002); // default port to listen
 
@@ -36,7 +33,10 @@ app.use('/api', apiRoutes);
 
 app.use((req, res, next) => {
     if (shouldReauthenticate(req.user)) {
-        res.redirect('/auth/login')
+        // set url to redirect to when logging in.
+        const url = req.originalUrl || req.url;
+        (req.session as any).returnTo = url;
+        return res.redirect('/auth/login')
     } else {
         next();
     }
